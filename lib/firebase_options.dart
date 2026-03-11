@@ -3,6 +3,7 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
@@ -15,6 +16,14 @@ import 'package:flutter/foundation.dart'
 /// );
 /// ```
 class DefaultFirebaseOptions {
+  static String _requiredEnv(String key) {
+    final value = dotenv.env[key];
+    if (value == null || value.isEmpty) {
+      throw StateError('Missing required env var: $key');
+    }
+    return value;
+  }
+
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
       return web;
@@ -40,9 +49,9 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyAba3XU6QhEs7YsNW8A_F1wnqw8_5L9ulo',
-    appId: '1:512920839675:web:398f61073d7b8c8368575e',
+  static final FirebaseOptions web = FirebaseOptions(
+    apiKey: _requiredEnv('FIREBASE_WEB_API_KEY'),
+    appId: _requiredEnv('FIREBASE_WEB_APP_ID'),
     messagingSenderId: '512920839675',
     projectId: 'pomodoro-timer-a38cc',
     authDomain: 'pomodoro-timer-a38cc.firebaseapp.com',
@@ -85,5 +94,4 @@ class DefaultFirebaseOptions {
     storageBucket: 'pomodoro-timer-a38cc.firebasestorage.app',
     measurementId: 'G-P73R5L4DRW',
   );
-
 }
