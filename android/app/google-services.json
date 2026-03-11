@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "512920839675",
+    "firebase_url": "https://pomodoro-timer-a38cc-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "pomodoro-timer-a38cc",
+    "storage_bucket": "pomodoro-timer-a38cc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:512920839675:android:c51596f5b58d212c68575e",
+        "android_client_info": {
+          "package_name": "com.example.pomadoro"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "512920839675-69isdcsgvtbfmeisq1ds6vperj2m83qq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.pomadoro",
+            "certificate_hash": "c454af48e966341a820f72e35d30bf2026de076e"
+          }
+        },
+        {
+          "client_id": "512920839675-rrl46mto7be2ps4icbmmtk8v7e2ba7jt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXtkQD-7f5JV07oTes-DgfEKuz4KcEPS8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "512920839675-rrl46mto7be2ps4icbmmtk8v7e2ba7jt.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "512920839675-4aoostn9qtb07cm4r93sk6b2953vqsm9.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.pomadoro"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
