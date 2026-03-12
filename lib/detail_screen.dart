@@ -314,10 +314,16 @@ class _DetailScreenState extends State<DetailScreen> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               const SizedBox(height: 8),
-                              Text(
-                                _timerText,
-                                textAlign: TextAlign.center,
-                                style: AppTextStyles.timer(textTheme),
+                              SizedBox(
+                                width: double.infinity,
+                                child: FittedBox(
+                                  fit: BoxFit.fitWidth,
+                                  child: Text(
+                                    _timerText,
+                                    textAlign: TextAlign.center,
+                                    style: AppTextStyles.timer(textTheme),
+                                  ),
+                                ),
                               ),
                               const SizedBox(height: 4),
                               Text(
@@ -469,7 +475,7 @@ class _DetailScreenState extends State<DetailScreen> {
               ),
               const SizedBox(width: 40, height: 20),
               SizedBox(
-                width: 86,
+                width: 90,
                 height: buttonHeight,
                 child: ElevatedButton(
                   onPressed: _phase == _Phase.idle ? null : () => _reset(),
