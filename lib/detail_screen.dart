@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 import 'app_styles.dart';
 
@@ -20,6 +21,9 @@ class _DetailScreenState extends State<DetailScreen> {
   final _restCtrl = TextEditingController(text: '5');
   final _repeatCtrl = TextEditingController(text: '4');
 
+  static const _metronomeAsset = 'lib/assets/metronome_60bpm.mp4';
+  final _player = AudioPlayer();
+  bool _isMuted = true;
   Timer? _timer;
   int _currentWorkTotalSeconds = 0;
   _Phase _phase = _Phase.idle;
@@ -31,11 +35,66 @@ class _DetailScreenState extends State<DetailScreen> {
   bool get _hideInputs => _phase != _Phase.idle;
 
   @override
+  void initState() {
+    super.initState();
+    _player.audioCache = AudioCache(prefix: '');
+  }
+
+  Future<void> _startMetronomeFromBeginning() async {
+    await _player.setReleaseMode(ReleaseMode.loop);
+    await _player.play(
+      AssetSource(_metronomeAsset),
+      volume: _isMuted ? 0.0 : 1.0,
+    );
+  }
+
+  Future<void> _syncMetronomePlayback() async {
+    try {
+      final inWork = _phase == _Phase.work;
+
+      if (!inWork) {
+        if (_player.state != PlayerState.stopped) {
+          await _player.stop();
+        }
+        return;
+      }
+
+      if (!_isRunning) {
+        if (_player.state != PlayerState.stopped) {
+          await _player.stop();
+        }
+        return;
+      }
+
+      if (_player.state != PlayerState.playing) {
+        await _startMetronomeFromBeginning();
+        return;
+      }
+
+      await _player.setVolume(_isMuted ? 0.0 : 1.0);
+    } catch (e) {
+      debugPrint('Metronome sync failed: $e');
+    }
+  }
+
+  Future<void> _toggleMute() async {
+    setState(() {
+      _isMuted = !_isMuted;
+    });
+    if (_player.state == PlayerState.playing) {
+      await _player.setVolume(_isMuted ? 0.0 : 1.0);
+      return;
+    }
+    unawaited(_syncMetronomePlayback());
+  }
+
+  @override
   void dispose() {
     _timer?.cancel();
     _workCtrl.dispose();
     _restCtrl.dispose();
     _repeatCtrl.dispose();
+    unawaited(_player.dispose());
     super.dispose();
   }
 
@@ -70,6 +129,7 @@ class _DetailScreenState extends State<DetailScreen> {
         });
       }
     });
+    unawaited(_syncMetronomePlayback());
   }
 
   Future<void> _handlePhaseEnd() async {
@@ -106,11 +166,13 @@ class _DetailScreenState extends State<DetailScreen> {
         }
       });
     }
+    unawaited(_syncMetronomePlayback());
     setState(() {});
   }
 
   Future<void> _reset() async {
     _timer?.cancel();
+    await _player.stop();
     await _flushWorkProgress();
     setState(() {
       _phase = _Phase.idle;
@@ -204,6 +266,7 @@ class _DetailScreenState extends State<DetailScreen> {
         return shouldExit;
       },
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
@@ -352,59 +415,73 @@ class _DetailScreenState extends State<DetailScreen> {
                         ),
                 ),
               ),
-              const SizedBox(height: 12),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    width: 200,
-                    height: buttonStartHeight,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        final isStartPhase =
-                            _phase == _Phase.idle || _phase == _Phase.done;
-                        if (isStartPhase) {
-                          _start();
-                        } else {
-                          _pauseResume();
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            (_phase == _Phase.idle || _phase == _Phase.done)
-                            ? AppColors.start
-                            : (_isRunning ? AppColors.pause : AppColors.cont),
-                        foregroundColor:
-                            (_phase == _Phase.idle || _phase == _Phase.done)
-                            ? Colors.white
-                            : Colors.black,
-                      ),
-                      child: Text(
-                        (_phase == _Phase.idle || _phase == _Phase.done)
-                            ? 'Start'
-                            : (_isRunning ? 'Pause' : 'Continue'),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 40, height: 20),
-                  SizedBox(
-                    width: 86,
-                    height: buttonHeight,
-                    child: ElevatedButton(
-                      onPressed: _phase == _Phase.idle ? null : () => _reset(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.reset,
-                        disabledBackgroundColor: Colors.grey.shade400,
-                        foregroundColor: Colors.white,
-                        disabledForegroundColor: Colors.white70,
-                      ),
-                      child: const Text('Reset'),
-                    ),
-                  ),
-                ],
+            ],
+          ),
+        ),
+        bottomNavigationBar: SafeArea(
+          top: false,
+          minimum: const EdgeInsets.fromLTRB(8, 12, 8, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                onPressed: _toggleMute,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(255, 45, 164, 207),
+                  disabledBackgroundColor: Colors.grey.shade400,
+                  foregroundColor: Colors.white,
+                  disabledForegroundColor: Colors.white70,
+                  iconAlignment: IconAlignment.end,
+                  iconSize: 25,
+                ),
+                icon: Icon(_isMuted ? Icons.volume_mute : Icons.volume_up),
               ),
-              SizedBox(height: 60),
+              SizedBox(height: 20),
+              SizedBox(
+                width: 200,
+                height: buttonStartHeight,
+                child: ElevatedButton(
+                  onPressed: () {
+                    final isStartPhase =
+                        _phase == _Phase.idle || _phase == _Phase.done;
+                    if (isStartPhase) {
+                      _start();
+                    } else {
+                      _pauseResume();
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        (_phase == _Phase.idle || _phase == _Phase.done)
+                        ? AppColors.start
+                        : (_isRunning ? AppColors.pause : AppColors.cont),
+                    foregroundColor:
+                        (_phase == _Phase.idle || _phase == _Phase.done)
+                        ? Colors.white
+                        : Colors.black,
+                  ),
+                  child: Text(
+                    (_phase == _Phase.idle || _phase == _Phase.done)
+                        ? 'Start'
+                        : (_isRunning ? 'Pause' : 'Continue'),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 40, height: 20),
+              SizedBox(
+                width: 86,
+                height: buttonHeight,
+                child: ElevatedButton(
+                  onPressed: _phase == _Phase.idle ? null : () => _reset(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.reset,
+                    disabledBackgroundColor: Colors.grey.shade400,
+                    foregroundColor: Colors.white,
+                    disabledForegroundColor: Colors.white70,
+                  ),
+                  child: const Text('Reset'),
+                ),
+              ),
             ],
           ),
         ),

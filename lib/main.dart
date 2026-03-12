@@ -80,7 +80,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   context,
                 ).push(MaterialPageRoute(builder: (_) => const DetailScreen()));
               },
-              child: const Text('Pomodoro timer'),
+              child: const Text('Pomadoro timer'),
             ),
             const SizedBox(height: 16),
           ],
